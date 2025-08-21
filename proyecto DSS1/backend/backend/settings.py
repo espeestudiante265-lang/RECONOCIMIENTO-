@@ -130,3 +130,12 @@ PCT_ATTENTION = 30
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+ALLOWED_HOSTS = ["*.up.railway.app", "localhost"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://reconocimiento-production-d389.up.railway.app",  # FRONT
+]
+CORS_ALLOWED_ORIGINS = [
+    "https://reconocimiento-production-d389.up.railway.app",
+]
+CORS_ALLOW_CREDENTIALS = True
