@@ -1,3 +1,10 @@
+
+# habilita PyMySQL como reemplazo de MySQLdb
+import pymysql
+pymysql.install_as_MySQLdb()
+
+
+
 #!/usr/bin/env python
 """Django's command-line utility for administrative tasks."""
 import os

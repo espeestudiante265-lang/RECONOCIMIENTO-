@@ -2,7 +2,7 @@
 gunicorn
 whitenoise
 dj-database-url
-mysqlclient
+PyMySQL==1.1.1
 djangorestframework
 djangorestframework-simplejwt
 django-cors-headers

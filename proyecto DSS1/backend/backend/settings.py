@@ -67,16 +67,17 @@ if os.getenv("MYSQLHOST"):
         pass
 
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQLDATABASE"),
-            "USER": os.getenv("MYSQLUSER"),
-            "PASSWORD": os.getenv("MYSQLPASSWORD"),
-            "HOST": os.getenv("MYSQLHOST"),
-            "PORT": os.getenv("MYSQLPORT", "3306"),
-            "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
-        }
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': '...',
+        'USER': '...',
+        'PASSWORD': '...',
+        'HOST': '...',
+        'PORT': '3306',
+        'OPTIONS': {'charset': 'utf8mb4'},
     }
+}
+
 else:
     DATABASES = {
         "default": {
