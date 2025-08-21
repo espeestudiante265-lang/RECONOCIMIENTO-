@@ -1,0 +1,58 @@
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: dss1-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-monitoreo_db}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-example}
+      MYSQL_TCP_PORT: ${DB_PORT:-3306}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p${DB_PASSWORD:-example} --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build:
+      context: ..
+      dockerfile: proyecto_dss1_deploy/Dockerfile.backend
+    container_name: dss1-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_NAME: ${DB_NAME:-monitoreo_db}
+      DB_USER: root
+      DB_PASSWORD: ${DB_PASSWORD:-example}
+      DB_PORT: ${DB_PORT:-3306}
+      DJANGO_SETTINGS_MODULE: backend.settings_docker
+    ports:
+      - "8000:8000"
+    volumes:
+      # Mount media uploads if you want them persisted
+      - backend_media:/app/backend/media
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: proyecto_dss1_deploy/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://localhost:8000}
+    container_name: dss1-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+
+volumes:
+  mysql_data:
+  backend_media:

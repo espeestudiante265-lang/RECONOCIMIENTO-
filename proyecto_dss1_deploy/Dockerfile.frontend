@@ -1,0 +1,19 @@
+
+# Frontend Dockerfile for Next.js
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy entire frontend folder (handles spaces via JSON-array form)
+COPY ["proyecto DSS1/frontend", "/app"]
+
+# Install deps (use ci if lockfile exists, else install)
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+
+# Build and run
+ARG NEXT_PUBLIC_API_BASE
+ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
+RUN npm run build
+
+EXPOSE 3000
+CMD ["npm", "run", "start"]
