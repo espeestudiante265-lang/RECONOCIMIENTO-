@@ -1,0 +1,45 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.dropdown-select {
+  /* mientras está cerrado, hereda el look oscuro de tu UI */
+  color: #e5e7eb;            /* texto claro */
+  background: transparent;   /* lo controlas con Tailwind (bg-white/5, etc.) */
+}
+
+/* Menú desplegado (opciones) */
+.dropdown-select option {
+  background: #ffffff;   /* fondo blanco en la lista */
+  color: #111827;        /* texto negro (gray-900) */
+}
+
+/* Opción resaltada / seleccionada en el menú */
+.dropdown-select option:checked,
+.dropdown-select option:hover {
+  background: #2563eb !important; /* azul (tailwind blue-600) */
+  color: #ffffff !important;       /* texto blanco */
+}
