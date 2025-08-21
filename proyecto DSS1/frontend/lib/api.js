@@ -36,3 +36,4 @@ const api = axios.create({
 });
 
 export default api;
+if (typeof window !== "undefined") window.__BASE_URL__ = BASE_URL;
