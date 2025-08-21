@@ -1,3 +1,0 @@
-python -m pip install --upgrade pip
-python -m pip install django gunicorn
-python -m pip freeze > requirements.txt
