@@ -1,19 +1,43 @@
+# =======================
+#   Frontend: Next.js
+#   Multi-stage build
+# =======================
 
-# Frontend Dockerfile for Next.js
-FROM node:20-alpine
-
+# ---------- builder ----------
+FROM node:20-alpine AS builder
 WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy entire frontend folder (handles spaces via JSON-array form)
-COPY ["proyecto DSS1/frontend", "/app"]
+# Copia solo los manifests primero para cachear npm ci
+COPY ["proyecto DSS1/frontend/package.json", "proyecto DSS1/frontend/package-lock.json", "./"]
 
-# Install deps (use ci if lockfile exists, else install)
-RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
+# Instala dependencias (sin tocar node_modules/.cache => evita EBUSY)
+RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Build and run
-ARG NEXT_PUBLIC_API_BASE
-ENV NEXT_PUBLIC_API_BASE=${NEXT_PUBLIC_API_BASE}
+# Copia el resto del código del frontend
+COPY ["proyecto DSS1/frontend/", "./"]
+
+# Variable pública para Next (se inyecta en build)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+
+# Build de producción
 RUN npm run build
 
-EXPOSE 3000
+
+# ---------- runner ----------
+FROM node:20-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=8080
+
+# Copiamos solo lo necesario para ejecutar
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
+
+EXPOSE 8080
 CMD ["npm", "run", "start"]
