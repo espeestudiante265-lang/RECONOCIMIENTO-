@@ -1,9 +1,10 @@
 ﻿Django==5.2.5
-gunicorn
-whitenoise
-dj-database-url
+gunicorn==23.0.0
+whitenoise[brotli]==6.7.0
+dj-database-url==2.3.0
 PyMySQL==1.1.1
-djangorestframework
-djangorestframework-simplejwt
-django-cors-headers
-python-dotenv
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.4.0
+python-dotenv==1.0.1
+tzdata==2024.1
