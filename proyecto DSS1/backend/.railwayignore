@@ -1,0 +1,14 @@
+@"
+.venv/
+node_modules/
+.git/
+__pycache__/
+*.zip
+*.rar
+*.7z
+*.log
+media/
+staticfiles/
+dist/
+build/
+"@ | Set-Content .railwayignore

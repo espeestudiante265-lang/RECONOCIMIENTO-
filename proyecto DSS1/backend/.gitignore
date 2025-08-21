@@ -1,0 +1,14 @@
+# Ignorar lo pesado
+@"
+.venv/
+node_modules/
+__pycache__/
+*.zip
+*.rar
+*.7z
+*.log
+media/
+staticfiles/
+dist/
+build/
+"@ | Set-Content .gitignore
