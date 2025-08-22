@@ -5,16 +5,21 @@ from datetime import timedelta
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# 🔐 Variables base
+# ── Básicos ─────────────────────────────────────────────────────────────────────
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-key-change-me")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-# --- Hosts permitidos (no dupliques más abajo) ---
-_ALLOWED = os.getenv("ALLOWED_HOSTS")  # ej: "reconocimiento-production-496c.up.railway.app,localhost"
-if _ALLOWED:
-    ALLOWED_HOSTS = [h.strip() for h in _ALLOWED.split(",") if h.strip()]
+# Dominio del FRONTEND (Next.js en Railway)
+FRONTEND_ORIGIN = os.getenv(
+    "FRONTEND_ORIGIN",
+    "https://reconocimiento-production-d389.up.railway.app",
+)
+
+# Hosts del backend (incluye tu dominio Railway)
+_allowed = os.getenv("ALLOWED_HOSTS")
+if _allowed:
+    ALLOWED_HOSTS = [h.strip() for h in _allowed.split(",") if h.strip()]
 else:
-    # ⚠️ Cambia el dominio del backend si es diferente
     ALLOWED_HOSTS = [
         "reconocimiento-production-496c.up.railway.app",
         "*.up.railway.app",
@@ -22,18 +27,14 @@ else:
         "127.0.0.1",
     ]
 
-# Dominio del FRONTEND (para CSRF/CORS). Puedes sobreescribir por env.
-FRONTEND_ORIGIN = os.getenv(
-    "FRONTEND_ORIGIN",
-    "https://reconocimiento-production-d389.up.railway.app",
-)
-
-# Para admin/formularios/CSRF (debe llevar esquema https://)
+# Para CSRF (debe llevar esquema https://)
 CSRF_TRUSTED_ORIGINS = [
-    FRONTEND_ORIGIN,
+    "https://reconocimiento-production-496c.up.railway.app",
     "https://*.up.railway.app",
+    FRONTEND_ORIGIN,
 ]
 
+# ── Apps / Middleware ───────────────────────────────────────────────────────────
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -45,13 +46,12 @@ INSTALLED_APPS = [
     "corsheaders",
     "rest_framework",
 
-
     "core.apps.CoreConfig",
     "attendance.apps.AttendanceConfig",
 ]
 
 MIDDLEWARE = [
-    "corsheaders.middleware.CorsMiddleware",  # debe ir arriba de CommonMiddleware
+    "corsheaders.middleware.CorsMiddleware",  # debe ir antes de CommonMiddleware
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -80,27 +80,38 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "backend.wsgi.application"
 
-# ✅ DB: Railway MySQL si hay variables; si no, SQLite
-if os.getenv("MYSQLHOST") or os.getenv("MYSQL_HOST"):
-    try:
-        import pymysql
-        pymysql.install_as_MySQLdb()
-    except Exception:
-        pass
-    
+# ── Base de Datos (MySQL en Railway si hay variables; sino SQLite) ──────────────
+if any(k in os.environ for k in ["MYSQLHOST", "MYSQL_HOST", "MYSQL_HOSTNAME"]):
+    import pymysql
+    pymysql.install_as_MySQLdb()
+
+    DB_NAME = (
+        os.getenv("MYSQLDATABASE")
+        or os.getenv("MYSQL_DATABASE")
+        or os.getenv("MYSQL_DB")
+        or "railway"
+    )
+    DB_USER = os.getenv("MYSQLUSER") or os.getenv("MYSQL_USER") or "root"
+    DB_PASSWORD = os.getenv("MYSQLPASSWORD") or os.getenv("MYSQL_PASSWORD") or ""
+    DB_HOST = (
+        os.getenv("MYSQLHOST")
+        or os.getenv("MYSQL_HOST")
+        or os.getenv("MYSQL_HOSTNAME")
+        or "localhost"
+    )
+    DB_PORT = os.getenv("MYSQLPORT") or os.getenv("MYSQL_PORT") or "3306"
+
     DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "NAME": "railway",   # base de datos
-        "USER": "root",      # usuario
-        "PASSWORD": "sxqTlOcxtkTegRzNWkurjNQTvSuPbTyE",  # contraseña
-        "HOST": "metro.proxy.rlwy.net",  # host del proxy TCP
-        "PORT": "50273",     # puerto del proxy TCP
-        "OPTIONS": {
-            "charset": "utf8mb4",
-        },
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "NAME": "railway",
+            "USER": "root",
+            "PASSWORD": "sxqTlOcxtkTegRzNWkurjNQTvSuPbTyE",
+           "HOST": "metro.proxy.rlwy.net",
+           "PORT": "50273",
+            "OPTIONS": {"charset": "utf8mb4"},
+        }
     }
-}
 else:
     DATABASES = {
         "default": {
@@ -109,6 +120,7 @@ else:
         }
     }
 
+# ── Passwords / i18n ───────────────────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -121,26 +133,34 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# ── Archivos estáticos ──────────────────────────────────────────────────────────
 STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"  # necesario en deploy
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Usuario personalizado
 AUTH_USER_MODEL = "core.User"
 
-# ---- CORS / CSRF ----
-# Si usas JWT puro no necesitas cookies, pero dejamos credenciales por si cambias a sesiones.
+# ── CORS / CSRF ────────────────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = False
-CORS_ALLOWED_ORIGINS = [FRONTEND_ORIGIN]
+CORS_ALLOWED_ORIGINS = [
+    FRONTEND_ORIGIN,
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5173",   # vite opcional
+]
 CORS_ALLOW_CREDENTIALS = True
 
-# Cookies seguras detrás del proxy de Railway
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SECURE_SSL_REDIRECT = not DEBUG  # HTTPS en prod
 
-# DRF + JWT
+# ── DRF + JWT ──────────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -155,12 +175,6 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-# Parámetros globales
+# ── Parámetros globales de tu app ──────────────────────────────────────────────
 PCT_ACTIVITY = 70
 PCT_ATTENTION = 30
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
-
-import pymysql
-pymysql.install_as_MySQLdb()
