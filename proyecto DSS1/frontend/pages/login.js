@@ -55,7 +55,9 @@ export default function Login() {
     try {
       // ✅ usa el cliente centralizado; NO construir URL a mano
       // si usas SimpleJWT, cambia a "/auth/jwt/create/"
-      const { data } = await api.post('/auth/login/', {
+      const { data } = await api.post('/auth/jwt/create/', {
+        // SimpleJWT espera "username" por defecto.+        // Mandamos ambos por compatibilidad con tu backend.
+        username: form.email,
         email: form.email,
         password: form.password,
       })
@@ -121,7 +123,7 @@ export default function Login() {
           {error && (
             <div className="mb-4 text-sm text-red-300 bg-red-500/10 border border-red-500/30 px-3 py-2 rounded-lg flex items-center gap-2 animate-pop">
               <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 9v4M12 17h.01" strokeLinecap="round"/>
+                <path d="M12 9v4M12 17h.01" strokeLinecap="round" />
                 <path d="M10.29 3.86l-8.2 14.2A1.5 1.5 0 003.3 20h17.4a1.5 1.5 0 001.3-1.94l-8.2-14.2a1.5 1.5 0 00-2.62 0z" />
               </svg>
               <span>{`Error${status ? ` (${status})` : ''}: `}{error}</span>
@@ -181,11 +183,11 @@ export default function Login() {
                 <button type="button" onClick={() => setShowPwd(!showPwd)} className="ml-1 inline-flex items-center justify-center w-8 h-8 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white transition">
                   {showPwd ? (
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M3 3l18 18" strokeLinecap="round"/><path d="M10.58 10.58A3 3 0 0112 9c1.66 0 3 1.34 3 3 0 .42-.09.83-.25 1.2M7.72 7.72C5.28 8.74 3.57 10.41 3 12c0 .91 2.55 6.48 9.72 6.48 1.45 0 2.77-.2 3.96-.55M15.53 15.53C14.63 16.46 13.38 17 12 17 9.79 17 8 15.21 8 13c0-1.38.54-2.63 1.47-3.53" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M3 3l18 18" strokeLinecap="round" /><path d="M10.58 10.58A3 3 0 0112 9c1.66 0 3 1.34 3 3 0 .42-.09.83-.25 1.2M7.72 7.72C5.28 8.74 3.57 10.41 3 12c0 .91 2.55 6.48 9.72 6.48 1.45 0 2.77-.2 3.96-.55M15.53 15.53C14.63 16.46 13.38 17 12 17 9.79 17 8 15.21 8 13c0-1.38.54-2.63 1.47-3.53" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : (
                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M2.458 12C3.732 7.943 7.523 5 12 5s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S3.732 16.057 2.458 12z" strokeLinecap="round" strokeLinejoin="round" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
                   )}
