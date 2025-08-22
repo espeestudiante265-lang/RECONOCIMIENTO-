@@ -1,7 +1,10 @@
 // frontend/pages/login.js
 import { useState } from 'react'
-import axios from 'axios'
 import { useRouter } from 'next/router'
+
+// ⬇️ Paso 4: usa el cliente centralizado y helpers de tokens
+import api from '@/lib/api'
+import { setTokens } from '@/lib/tokens'
 
 const IS_DEV =
   typeof process !== 'undefined' && process.env.NODE_ENV !== 'production'
@@ -13,7 +16,6 @@ function formatBackendErrors(payload) {
   if (payload.detail) return String(payload.detail)
   if (payload.non_field_errors?.length) return payload.non_field_errors.join('\n')
 
-  // Errores de campos de DRF: { field: ["msg1", "msg2"], ... }
   try {
     const lines = Object.entries(payload).map(([k, v]) => {
       const text = Array.isArray(v) ? v.join(', ') : String(v)
@@ -34,10 +36,11 @@ export default function Login() {
   const [status, setStatus] = useState(null)
   const [errorDebug, setErrorDebug] = useState(null)
 
+  // Para tu bloque de debug visual, mostramos la baseURL real del cliente:
   const API_BASE =
-    (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_BASE)
-      ? String(process.env.NEXT_PUBLIC_API_BASE).replace(/\/+$/, '')
-      : 'http://127.0.0.1:8000'
+    (typeof window !== 'undefined' && api?.defaults?.baseURL)
+      ? String(api.defaults.baseURL).replace(/\/+$/, '')
+      : (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000')
 
   const handleChange = (e) => {
     setError(null)
@@ -60,12 +63,28 @@ export default function Login() {
     setErrorDebug(null)
 
     try {
-      const { data } = await axios.post(`${API_BASE}/api/auth/login/`, {
+      // ⬇️ PASO 4 (implementado aquí):
+      // 1) Intento con SimpleJWT estándar
+      let { data } = await api.post('/api/auth/jwt/create/', {
         email: form.email,
         password: form.password,
       })
 
-      const token =
+      // 2) Si ese endpoint no existe en tu API (404), intenta con tu /login/
+      if (!data?.access && !data?.token && !data?.access_token) {
+        try {
+          const alt = await api.post('/api/auth/login/', {
+            email: form.email,
+            password: form.password,
+          })
+          data = alt.data
+        } catch (_e) {
+          // dejamos que lo maneje el bloque principal
+        }
+      }
+
+      // 3) Extrae tokens y guarda
+      const access =
         data?.access ||
         data?.token ||
         data?.access_token ||
@@ -73,19 +92,26 @@ export default function Login() {
         data?.jwt ||
         null
 
-      const role =
-        data?.role || data?.user?.role || data?.profile?.role || data?.data?.role || null
+      const refresh =
+        data?.refresh ||
+        data?.tokens?.refresh ||
+        null
 
-      if (!token) {
-        console.error('DEBUG login payload sin token:', data)
-        throw new Error('La API no devolvió token.')
+      if (!access) {
+        console.error('DEBUG login payload sin access token:', data)
+        throw new Error('La API no devolvió token de acceso.')
       }
 
-      localStorage.setItem('token', token)
-      if (data?.refresh) localStorage.setItem('refresh', data.refresh)
+      // Guarda tokens de forma consistente
+      setTokens({ access, refresh })
+
+      // (opcional) Guarda algunos metadatos que ya usabas
+      const role =
+        data?.role || data?.user?.role || data?.profile?.role || data?.data?.role || null
       if (role) localStorage.setItem('role', role)
       localStorage.setItem('email', form.email)
 
+      // Redirige
       router.replace('/dashboard')
     } catch (err) {
       const st = err?.response?.status ?? null

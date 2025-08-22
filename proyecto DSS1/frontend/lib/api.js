@@ -1,39 +1,83 @@
-// frontend/lib/api.js (versión corregida y simplificada)
+// /frontend/lib/api.js
 import axios from "axios";
+import { getAccessToken, clearTokens } from "./tokens";
 
-const isProd = process.env.NODE_ENV === "production";
+/** ========= Entorno ========= **/
+const IS_PROD = process.env.NODE_ENV === "production";
 
-/** ========= Base URL ========= **/
+/** ========= Base URL =========
+ * Acepta:
+ *  - NEXT_PUBLIC_API_URL (recomendado)
+ *  - NEXT_PUBLIC_API_BASE (compat)
+ * En producción exige una de las dos. En dev hace fallback a http://127.0.0.1:8000
+ **/
 const RAW_ENV =
-  process.env.NEXT_PUBLIC_API_URL || // recomendado
-  process.env.NEXT_PUBLIC_API_BASE || // compatibilidad
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE ||
   null;
 
-// 🚨 En producción nunca caigas en localhost
-if (isProd && !RAW_ENV) {
-  throw new Error("❌ Falta NEXT_PUBLIC_API_URL en producción. Configúrala en Railway → Variables.");
+if (IS_PROD && !RAW_ENV) {
+  throw new Error(
+    "❌ Falta NEXT_PUBLIC_API_URL en producción. Configúrala en Railway → Variables del servicio frontend."
+  );
 }
 
-// En dev se permite fallback a localhost
+// En desarrollo puedes trabajar con el backend local
 const RAW = RAW_ENV || "http://127.0.0.1:8000";
 
-// normaliza: añade protocolo si falta y quita barras al final
-const NORMALIZED = (/^https?:\/\//i.test(RAW) ? RAW : `https://${RAW}`).replace(/\/+$/, "");
+// Normaliza: agrega protocolo si falta y quita / al final
+const WITH_PROTOCOL = /^https?:\/\//i.test(RAW) ? RAW : `https://${RAW}`;
+const TRIMMED = WITH_PROTOCOL.replace(/\/+$/, "");
 
-// asegura que siempre termines en /api
-export const BASE_URL = /\/api$/i.test(NORMALIZED) ? NORMALIZED : `${NORMALIZED}/api`;
+// Asegura terminar en /api SIN duplicarlo si ya viene
+export const BASE_URL = /\/api$/i.test(TRIMMED) ? TRIMMED : `${TRIMMED}/api`;
 
-// Debug visible en navegador
+// Debug útil en navegador
 if (typeof window !== "undefined") {
   window.__BASE_URL__ = BASE_URL;
 }
 
-/** ========= Cliente Axios listo ========= **/
+/** ========= Cliente Axios ========= **/
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: BASE_URL, // ej: https://tu-backend.up.railway.app/api
+  withCredentials: true, // cookies (csrftoken, session) si aplica
+  xsrfCookieName: "csrftoken",
+  xsrfHeaderName: "X-CSRFToken",
   timeout: 20000,
-  headers: { "Content-Type": "application/json" },
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
 });
 
+/** ========= Interceptors ========= **/
+// Adjunta Bearer <access_token> si existe
+api.interceptors.request.use((config) => {
+  const tk = getAccessToken?.();
+  if (tk) config.headers.Authorization = `Bearer ${tk}`;
+  return config;
+});
+
+// Manejo de 401: limpia tokens y (opcional) redirige a /login
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    if (status === 401) {
+      try {
+        clearTokens?.();
+      } catch {}
+      if (typeof window !== "undefined") {
+        const isLogin = window.location.pathname.endsWith("/login");
+        if (!isLogin) {
+          // Descomenta si quieres redirección automática:
+          // window.location.href = "/login";
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;
-if (typeof window !== "undefined") window.__BASE_URL__ = BASE_URL;
+export { api };
