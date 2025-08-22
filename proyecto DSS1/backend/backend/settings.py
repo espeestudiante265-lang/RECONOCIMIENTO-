@@ -159,3 +159,6 @@ PCT_ATTENTION = 30
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
+
+import pymysql
+pymysql.install_as_MySQLdb()
