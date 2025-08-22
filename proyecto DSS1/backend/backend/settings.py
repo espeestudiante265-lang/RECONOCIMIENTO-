@@ -44,6 +44,8 @@ INSTALLED_APPS = [
 
     "corsheaders",
     "rest_framework",
+    "rest_framework_simplejwt",   # ⬅️ NUEVO
+    "djoser",                       # ⬅️ NUEVO
 
     "core.apps.CoreConfig",
     "attendance.apps.AttendanceConfig",
