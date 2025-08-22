@@ -87,18 +87,20 @@ if os.getenv("MYSQLHOST") or os.getenv("MYSQL_HOST"):
         pymysql.install_as_MySQLdb()
     except Exception:
         pass
-
+    
     DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.mysql",
-            "NAME": os.getenv("MYSQLDATABASE") or os.getenv("MYSQL_DB", ""),
-            "USER": os.getenv("MYSQLUSER") or os.getenv("MYSQL_USER", ""),
-            "PASSWORD": os.getenv("MYSQLPASSWORD") or os.getenv("MYSQL_PASSWORD", ""),
-            "HOST": os.getenv("MYSQLHOST") or os.getenv("MYSQL_HOST", ""),
-            "PORT": os.getenv("MYSQLPORT") or os.getenv("MYSQL_PORT", "3306"),
-            "OPTIONS": {"charset": "utf8mb4"},
-        }
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "railway",   # base de datos
+        "USER": "root",      # usuario
+        "PASSWORD": "sxqTlOcxtkTegRzNWkurjNQTvSuPbTyE",  # contraseña
+        "HOST": "metro.proxy.rlwy.net",  # host del proxy TCP
+        "PORT": "50273",     # puerto del proxy TCP
+        "OPTIONS": {
+            "charset": "utf8mb4",
+        },
     }
+}
 else:
     DATABASES = {
         "default": {
